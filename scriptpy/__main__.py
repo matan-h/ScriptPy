@@ -1,1 +1,2 @@
-from .pipes import PipeTransformer
+from .main import main
+main()
