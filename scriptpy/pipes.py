@@ -1,6 +1,7 @@
 import ast, io, tokenize, token
 from collections.abc import Iterable
 import astor
+import linecache
 # ——— helpers ——————————————————————————————————————————————————
 
 class MyList(list):
@@ -9,17 +10,17 @@ class MyList(list):
             return MyList(map(fn, self))
         raise TypeError("Right-hand side must be callable")
 
-def _pipeable(obj):
+def left_pipe(obj):
     # wrap any non-str iterable into MyList so that “| func” works
     if isinstance(obj, Iterable) and not isinstance(obj, (str, MyList)):
         return MyList(obj)
     return obj
 
-def PIPE_ATTR(name, *args):
+def _attr_pipe(name, *args):
     """Return a function x→ x.name(*args)."""
-    def _f(x):
+    def attr_pipe(x):
         return getattr(x, name)(*args)
-    return _f
+    return attr_pipe
 
 # ——— AST transform for plain “| func” and “|.method” ——————————————————
 
@@ -29,36 +30,11 @@ class PipeTransformer(ast.NodeTransformer):
         if not isinstance(node.op, ast.BitOr):
             return node
 
-        # 1) attribute-pipe: right = PIPE_ATTR(...) ?
-        if (isinstance(node.right, ast.Call)
-        and isinstance(node.right.func, ast.Name)
-        and node.right.func.id == 'PIPE_ATTR'):
-            name = node.right.args[0].value                # type: ignore # the method name
-            args = node.right.args[1:]                     # its arguments
-            return ast.ListComp(
-                elt=ast.Call(
-                    func=ast.Attribute(
-                        value=ast.Name(id='x', ctx=ast.Load()),
-                        attr=name,
-                        ctx=ast.Load()
-                    ),
-                    args=args,
-                    keywords=[]
-                ),
-                generators=[
-                    ast.comprehension(
-                        target=ast.Name(id='x', ctx=ast.Store()),
-                        iter=node.left,
-                        ifs=[],
-                        is_async=0
-                    )
-                ]
-            )
 
-        # 2) plain func-pipe:   expr | fn   →   _pipeable(expr) | (fn)
+        # 2) plain func-pipe:   expr | fn   →   _lpipe(expr) | (fn)
         return ast.BinOp(
             left=ast.Call(
-                func=ast.Name(id='_pipeable', ctx=ast.Load()),
+                func=ast.Name(id='_lpipe', ctx=ast.Load()),
                 args=[node.left],
                 keywords=[]
             ),
@@ -67,7 +43,7 @@ class PipeTransformer(ast.NodeTransformer):
         )
 
 def custom_eval(src, globals_=globals(), locals_=None):
-    # ——— 1) token-level rewrite of “|.name…” → “| PIPE_ATTR('name',…)”
+    # ——— 1) token-level rewrite of “|.name…” → “| _apipe('name',…)”
     toks = list(tokenize.generate_tokens(io.StringIO(src).readline))
     out = []
     i = 0
@@ -88,9 +64,9 @@ def custom_eval(src, globals_=globals(), locals_=None):
                         if depth and tt.type != token.ENDMARKER:
                             args.append((tt.type, tt.string))
                         j += 1
-                # emit:   | PIPE_ATTR('name' [ , args ] )
+                # emit:   | _apipe('name' [ , args ] )
                 out.append((token.OP, '|'))
-                out.append((token.NAME, 'PIPE_ATTR'))
+                out.append((token.NAME, '_apipe'))
                 out.append((token.OP, '('))
                 out.append((token.STRING, repr(name.string)))
                 if args:
@@ -104,6 +80,13 @@ def custom_eval(src, globals_=globals(), locals_=None):
 
     rewritten = tokenize.untokenize(out)
 
+    filename = '<pipe>'
+    # linecache.cache[filename] = (size, mtime, lines, fullname)
+    lines = src.splitlines(keepends=True) # src is the original, not fully accurate.
+    # linecache.cache[filename] = (len(rewritten), None, lines, filename)
+    linecache.cache[filename] = (len(rewritten.encode('utf-8')), None, lines, filename)
+
+
     # ——— 2) AST parse & transform
     tree = ast.parse(rewritten, mode='eval')
     tree = PipeTransformer().visit(tree)
@@ -113,8 +96,8 @@ def custom_eval(src, globals_=globals(), locals_=None):
 
     # ——— 3) eval with our small helpers in scope
     env = {
-        '_pipeable': _pipeable,
-        'PIPE_ATTR': PIPE_ATTR,
+        '_lpipe': left_pipe,
+        '_apipe': _attr_pipe,
         'MyList': MyList
     }
     if globals_: env.update(globals_)
@@ -141,3 +124,7 @@ print(custom_eval("range(3) | str |.zfill(2)"))
 print(custom_eval("range(3) | str"))
 
 # ['00', '01', '02']
+# print(custom_eval("nameerror | nameerror"))
+
+print(custom_eval("range(3)|str|.m"))
+
