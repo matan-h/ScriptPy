@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 import ast
 from tokenize import TokenInfo
-from typing import Iterable
+
 
 class BaseTransformer(ABC,ast.NodeTransformer):
     """
@@ -11,11 +11,11 @@ class BaseTransformer(ABC,ast.NodeTransformer):
 
     @staticmethod
     @abstractmethod
-    def token_level_transform(toks:list[TokenInfo])->Iterable[TokenInfo]:
+    def token_level_transform(toks:list[TokenInfo])->list[TokenInfo]:
         """
         Abstract method to transform the code at the token level. (before AST visiting)
         """
-        pass
+        return toks
 
     def visit(self, node):
         """
