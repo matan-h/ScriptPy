@@ -59,43 +59,82 @@ class PipeTransformer(BaseTransformer):
         )
 
     @staticmethod
-    def token_level_transform(toks):
-        out = []
-        i = 0
-        while i < len(toks):
-            t = toks[i]
-            if t.type == token.OP and t.string == "|" and i + 2 < len(toks):
-                dot, name = toks[i + 1], toks[i + 2]
-                if (
-                    dot.type == token.OP
-                    and dot.string == "."
-                    and name.type == token.NAME
-                ):
-                    # collect optional args inside parentheses
-                    j, args = i + 3, []
-                    if j < len(toks) and toks[j].string == "(":
-                        depth = 1
-                        j += 1
-                        while j < len(toks) and depth:
-                            tt = toks[j]
-                            if tt.string == "(":
-                                depth += 1
-                            elif tt.string == ")":
-                                depth -= 1
-                            if depth and tt.type != token.ENDMARKER:
-                                args.append((tt.type, tt.string))
-                            j += 1
-                    # emit:   | _apipe('name' [ , args ] )
-                    out.append((token.OP, "|"))
-                    out.append((token.NAME, "_apipe"))
-                    out.append((token.OP, "("))
-                    out.append((token.STRING, repr(name.string)))
-                    if args:
-                        out.append((token.OP, ","))
-                        out.extend(args)
-                    out.append((token.OP, ")"))
-                    i = j
-                    continue
-            out.append((t.type, t.string))
-            i += 1
-        return out
+    def token_level_transform(editor):
+        """
+        Transform the token stream to replace the pattern 'left |.attr' with 'left | _apipe('attr',...)'.
+        """
+        while editor.has_more():
+            current_token = editor.current
+            assert current_token; # for typing
+
+            # Check for the specific pattern: '| . NAME'
+            # Ensure there are enough tokens to peek ahead (at least 3: |, ., NAME)
+            pipe_token = current_token
+            dot_token = editor.peek(1)
+            name_token = editor.peek(2)
+
+            if (
+                current_token.type == token.OP and current_token.string == "|" and
+                dot_token and dot_token.type == token.OP and dot_token.string == "." and
+                name_token and name_token.type == token.NAME
+            ):
+
+                # We've matched '| . NAME'. Extract relevant tokens.
+
+                # Now, check for an optional argument list in parentheses: '( ... )'
+                # Start peeking from the token after 'NAME', which is at offset 3 from '|'
+                arg_start_offset = 3
+                args_within_parens = []
+
+                # Check if an opening parenthesis exists immediately after 'NAME'
+                if editor.peek(arg_start_offset) and editor.peek(arg_start_offset).string == "(":
+                    depth = 1 # Keep track of parenthesis nesting level
+                    current_peek_offset = arg_start_offset + 1 # Move past the opening '('
+
+                    # Collect tokens until the matching closing parenthesis is found
+                    while editor.peek(current_peek_offset) and depth > 0:
+                        peeked_token = editor.peek(current_peek_offset)
+                        assert peeked_token; # for typing
+
+                        if peeked_token.string == "(":
+                            depth += 1
+                        elif peeked_token.string == ")":
+                            depth -= 1
+
+                        # Only append tokens that are *inside* the main parenthesis block
+                        # and not the final closing parenthesis itself
+                        if depth > 0:
+                            args_within_parens.append(peeked_token)
+
+                        current_peek_offset += 1 # Move to the next token to check
+
+                    # The total number of tokens consumed by this pattern, including '(', args, ')'
+                    total_consumed_tokens = current_peek_offset
+                else:
+                    # No parentheses found, so only '| . NAME' is consumed.
+                    total_consumed_tokens = arg_start_offset # Which is 3 tokens (|, ., NAME)
+
+                # Now, emit the transformed tokens: | _apipe('name', [args])
+                editor.append(type=token.OP, string="|")
+                editor.append(type=token.NAME, string="_apipe")
+                editor.append(type=token.OP, string="(")
+                editor.append(type=token.STRING, string=repr(name_token.string)) # 'name' as a string literal
+
+                if args_within_parens:
+                    editor.append(type=token.OP, string=",")
+                    # Append all collected argument tokens
+                    editor.extend(*args_within_parens)
+
+                editor.append(type=token.OP, string=")")
+
+                # Skip the original tokens that were consumed and replaced
+                editor.skip(total_consumed_tokens)
+
+                # Continue to the next iteration of the loop to process the next set of tokens
+                continue
+
+            # If the special pattern was not matched, simply append the current token
+            # to the output list and move to the next token in the input stream.
+            editor.append_current()
+
+        # After the loop, return the final list of transformed tokens
