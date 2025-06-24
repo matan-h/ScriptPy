@@ -4,14 +4,14 @@ import ast
 import subprocess
 from io import StringIO
 
-def shell_exec_base(cmd):
-    return subprocess.run(cmd, shell=True, check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+def shell_exec_base(cmd,check=True):
+    return subprocess.run(cmd, shell=True, check=check, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
 def shell_exec(cmd):
-    return shell_exec_base(cmd).stdout.strip()
+    return shell_exec_base(cmd,check=True).stdout.strip()
 
 def shell_exec_multi(cmd):
-    res = shell_exec_base(cmd)
+    res = shell_exec_base(cmd,check=False)
     return res.stdout.strip(), res.stderr.strip(), res.returncode
 
 

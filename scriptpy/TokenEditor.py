@@ -1,8 +1,7 @@
-import token # Provides constants for token types (e.g., token.OP, token.NAME, token.STRING)
+import token
 import dataclasses
 from tokenize import TokenInfo
 from typing import List, Tuple, Union, Callable
-import astor
 @dataclasses.dataclass
 class SimpleToken:
     type: int
@@ -120,19 +119,12 @@ class TokenEditor:
 
         This is useful when a sequence of input tokens is recognized and needs
         to be effectively "deleted" or replaced by new tokens added via `append()`.
-
-        Args:
-            steps: The number of input tokens to skip. Defaults to 1.
         """
         self.advance(steps)
 
     def has_more(self) -> bool:
         """
         Checks if there are more tokens remaining in the input list to be processed.
-
-        Returns:
-            `True` if the internal pointer has not yet reached the end of the
-            input token list, `False` otherwise.
         """
         return self._current_idx < len(self._input_tokens)
 
@@ -159,13 +151,6 @@ class TokenEditor:
         """
         Returns the last 'count' tokens that have been appended to the output list.
         Useful for looking at the context that has already been processed and emitted.
-
-        Args:
-            count: The maximum number of tokens to retrieve from the end of the
-                   output history.
-
-        Returns:
-            A list of `TokenInfo` objects from the end of the output history.
         """
         return self._output_tokens[-count:] if count <= len(self._output_tokens) else list(self._output_tokens)
 

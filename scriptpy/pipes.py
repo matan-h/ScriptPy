@@ -1,7 +1,6 @@
 import ast, io, tokenize, token
 from collections.abc import Iterable
-import astor
-import linecache
+
 
 from .baseTransformer import BaseTransformer
 
