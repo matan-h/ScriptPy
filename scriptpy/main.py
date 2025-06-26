@@ -1,7 +1,11 @@
-import ast, io, tokenize
-from typing import Type
-import astor
+import argparse
+import ast
+import io
 import linecache
+import tokenize
+from typing import Type
+
+import astor
 
 from .TokenEditor import TokenEditor
 
@@ -11,9 +15,10 @@ from .baseTransformer import BaseTransformer
 from .smart_eval import balance_fix, smart_parse, smart_run
 
 
-transformers:list[Type[BaseTransformer]] = [PipeTransformer,ShellTransformer]
+transformers: list[Type[BaseTransformer]] = [PipeTransformer, ShellTransformer]
 
-def custom_eval(src:str, globals_: dict|None =None):
+
+def custom_eval(src: str, globals_: dict | None = None):
     # ——— 1) token-level rewrite of “|.name…” → “| _apipe('name',…)”
     src = balance_fix(src)
 
@@ -53,16 +58,30 @@ def custom_eval(src:str, globals_: dict|None =None):
     for transformer in transformers:
         env.update(transformer.environment)
 
-    if globals_: env.update(globals_)
-    return smart_run(tree, globals_dict=env)
-    # return eval(code, env, locals_ or {})
+    if globals_:
+        env.update(globals_)
+    return smart_run(tree, globals_dict=env, filename=filename)
 
-# ——— examples ——————————————————————————————————————————————————
+
 def main():
-    print(
-        custom_eval(
-            "['abc', 'bcd', 'cdex'] |.replace('c','x') |.replace('x','z')"
-        )
+    parser = argparse.ArgumentParser(
+        description="Run scriptpy code from a file or the command line."
     )
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("filename", nargs="?", help="scriptpy filename to execute")
+    group.add_argument(
+        "-c", "--code", type=str, help="scriptpy code provided as a string"
+    )
+
+    args = parser.parse_args()
+
+    if args.filename:
+        with open(args.filename, "r") as f:
+            code = f.read()
+        print(custom_eval(code))
+    elif args.code:
+        print(custom_eval(args.code))
+
+
 if __name__ == "__main__":
     main()

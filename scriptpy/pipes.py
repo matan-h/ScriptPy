@@ -68,7 +68,6 @@ class PipeTransformer(BaseTransformer):
 
             # Check for the specific pattern: '| . NAME'
             # Ensure there are enough tokens to peek ahead (at least 3: |, ., NAME)
-            pipe_token = current_token
             dot_token = editor.peek(1)
             name_token = editor.peek(2)
 
@@ -84,9 +83,10 @@ class PipeTransformer(BaseTransformer):
                 # Start peeking from the token after 'NAME', which is at offset 3 from '|'
                 arg_start_offset = 3
                 args_within_parens = []
+                arg_start = editor.peek(arg_start_offset)
 
                 # Check if an opening parenthesis exists immediately after 'NAME'
-                if editor.peek(arg_start_offset) and editor.peek(arg_start_offset).string == "(":
+                if arg_start and arg_start.string == "(":
                     depth = 1 # Keep track of parenthesis nesting level
                     current_peek_offset = arg_start_offset + 1 # Move past the opening '('
 

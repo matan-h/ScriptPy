@@ -49,7 +49,8 @@ def smart_parse(code, filename):
 
 
 def smart_run(
-    tree:ast.Module, globals_dict=None
+    tree:ast.Module, globals_dict,
+    filename: str,
 ):  # inspired by pyodide CodeRunner : https://github.com/pyodide/pyodide/blob/4fbbbedc09496c6968086d69aadba75398718b13/src/py/_pyodide/_base.py#L172
     if globals_dict is None:
         globals_dict = {}
@@ -61,15 +62,15 @@ def smart_run(
         if len(tree.body) > 1:
             exec(
                 compile(
-                    ast.Module(body=tree.body[:-1], type_ignores=[]), "<ast>", "exec"
+                    ast.Module(body=tree.body[:-1], type_ignores=[]), filename, "exec"
                 ),
                 globals_dict,
             )
         return eval(
-            compile(ast.Expression(last_stmt.value), "<ast>", "eval"), globals_dict
+            compile(ast.Expression(last_stmt.value), filename, "eval"), globals_dict
         )
     else:
-        exec(compile(tree, "<ast>", "exec"), globals_dict)
+        exec(compile(tree, filename, "exec"), globals_dict)
         return None
 
 
