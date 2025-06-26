@@ -16,7 +16,7 @@ common scripting tasks more concise and readable.
 * `left | right` = `[right(x) for x in left]`
 * `left |.right` (note the dot) = `[x.<right> for x in left]`
 * `left |.right(arg1,arg2)` = `[x.<right>(arg1,arg2) for x in left]`
-
+* auto import of qualified functions, so `os.path.basename` work without importing os (and any other available module too)
 
 ### Shell Command Execution
 

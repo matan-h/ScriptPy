@@ -10,7 +10,6 @@ class BaseTransformer(ABC,ast.NodeTransformer):
     environment:dict = {}
 
     @staticmethod
-    @abstractmethod
     def token_level_transform(editor:TokenEditor)->None:
         """
         Abstract method to transform the code at the token level. (before AST visiting)

@@ -1,6 +1,3 @@
-import pytest
-
-# Import the function under test. Adjust the import path to match your package structure.
 from scriptpy import custom_eval
 
 
@@ -43,7 +40,7 @@ def test_shell_stdout_stderr_returncode():
     res = custom_eval(cmd)
     assert res;
 
-    stdout, stderr, code = res # type: ignore
+    stdout, stderr, code = res
     assert stdout == 'OUT'
     assert stderr == 'ERR'
     assert code == 5
@@ -53,3 +50,9 @@ def test_pipe_on_generator():
     # Test that generators (e.g., range) also work
     result = custom_eval("range(4) | str |.zfill(2)")
     assert result == ['00', '01', '02', '03']
+
+def test_autoimport():
+    # Test that auto-imports work
+    src = "[math.sqrt(x) for x in range(0,101,20)] | round"
+    result = custom_eval(src)
+    assert result ==[0, 4, 6, 8, 9,10]

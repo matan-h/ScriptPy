@@ -8,6 +8,7 @@ from .autoimport import AutoImportTransformer
 transformers:list[Type[BaseTransformer]] = [
     ShellTransformer,
     PipeTransformer,
+    AutoImportTransformer
 
 
 ]

@@ -2,7 +2,7 @@ import ast
 import importlib
 import importlib.util
 import sys
-
+from ..baseTransformer import BaseTransformer
 blacklist = [
     "this", # can be confusing
 ]
@@ -12,7 +12,7 @@ import importlib
 import importlib.util
 import sys
 
-class AutoImportTransformer(ast.NodeTransformer):
+class AutoImportTransformer(BaseTransformer):
     """Detects qualified module usage and inserts missing imports."""
 
     def __init__(self):
