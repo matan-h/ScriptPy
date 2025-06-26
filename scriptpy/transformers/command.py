@@ -1,5 +1,5 @@
 import tokenize,token
-from .baseTransformer import BaseTransformer
+from ..baseTransformer import BaseTransformer
 import ast
 import subprocess
 from io import StringIO

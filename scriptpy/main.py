@@ -9,13 +9,10 @@ import astor
 
 from .TokenEditor import TokenEditor
 
-from .pipes import PipeTransformer
-from .commands import ShellTransformer
-from .baseTransformer import BaseTransformer
+from .transformers import transformers
 from .smart_eval import balance_fix, smart_parse, smart_run
 
 
-transformers: list[Type[BaseTransformer]] = [PipeTransformer, ShellTransformer]
 
 
 def custom_eval(src: str, globals_: dict | None = None):

@@ -2,7 +2,7 @@ import ast, io, tokenize, token
 from collections.abc import Iterable
 
 
-from .baseTransformer import BaseTransformer
+from ..baseTransformer import BaseTransformer
 
 # ——— helpers ——————————————————————————————————————————————————
 
