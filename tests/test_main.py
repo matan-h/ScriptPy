@@ -9,50 +9,58 @@ def test_pipe_with_named_function():
 def test_pipe_attribute_access():
     # Access .upper on each string
     result = custom_eval("['hello', 'world'] |.upper")
-    assert result == ['HELLO', 'WORLD']
+    assert result == ["HELLO", "WORLD"]
 
 
 def test_pipe_method_call_with_args():
     # Replace characters in each string
     src = "['apple', 'banana', 'cherry'] |.replace('a','A')"
     result = custom_eval(src)
-    assert result == ['Apple', 'bAnAnA', 'cherry']
+    assert result == ["Apple", "bAnAnA", "cherry"]
 
 
 def test_pipe_chaining():
     # Chain multiple transformations
     src = "['abc', 'bcd', 'cde'] |.replace('c','x') |.replace('x','z')"
-    assert custom_eval(src) == ['abz', 'bzd', 'zde']
+    assert custom_eval(src) == ["abz", "bzd", "zde"]
 
 
 def test_shell_simple_echo():
     # Simple echo should strip trailing newline
     output = custom_eval("$('echo hi')")
-    assert output == 'hi'
+    assert output == "hi"
 
 
 def test_shell_stdout_stderr_returncode():
     # Generate distinct stdout, stderr, and exit code
     cmd = (
-        "a,b,c = $(\"python -c 'import sys; sys.stdout.write(\\\"OUT\\\");"
-        " sys.stderr.write(\\\"ERR\\\"); sys.exit(5)'\")\n(a,b,c)"
+        'a,b,c = $("python -c \'import sys; sys.stdout.write(\\"OUT\\");'
+        ' sys.stderr.write(\\"ERR\\"); sys.exit(5)\'")\n(a,b,c)'
     )
     res = custom_eval(cmd)
-    assert res;
+    assert res
 
     stdout, stderr, code = res
-    assert stdout == 'OUT'
-    assert stderr == 'ERR'
+    assert stdout == "OUT"
+    assert stderr == "ERR"
     assert code == 5
 
 
 def test_pipe_on_generator():
     # Test that generators (e.g., range) also work
     result = custom_eval("range(4) | str |.zfill(2)")
-    assert result == ['00', '01', '02', '03']
+    assert result == ["00", "01", "02", "03"]
+
 
 def test_autoimport():
     # Test that auto-imports work
     src = "[math.sqrt(x) for x in range(0,101,20)] | round"
     result = custom_eval(src)
-    assert result ==[0, 4, 6, 8, 9,10]
+    assert result == [0, 4, 6, 8, 9, 10]
+
+
+def test_fix_balance():
+    # Test that fix_balance works
+    src = "{9:[1,[2,],[3,{'a':[4"
+    result = custom_eval(src)
+    assert result == {9: [1, [2], [3, {"a": [4]}]]}
