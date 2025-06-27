@@ -48,7 +48,8 @@ If your code is not syntactically complete (e.g., ends with an open bracket `{`,
 ## Installation
 To install, use:
 ```bash
-pip install scriptpy
+pip install scriptpy-syntax
+# Thats the name on PyPI, still use `import scriptpy`, `$ scriptpy`
 ```
 
 ## Usage

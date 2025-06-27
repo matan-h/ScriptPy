@@ -1,15 +1,28 @@
 [project]
-name = "scriptpy"
-version = "0.1.0"
-description = ""
-authors = [
-    {name = "matan h"}
-]
+name = "scriptpy-syntax" # Name on PyPI
+version = "0.1.1"
+description = "Python syntax extensions to make live scripts easier.."
+authors = [{ name = "matan-h" }]
 readme = "README.md"
-requires-python = ">=3.13"
-dependencies = [
+requires-python = ">=3.9"
+dependencies = []
+
+urls.homepage = "https://github.com/matan-h/scriptpy"
+license = { text = "MIT" }
+keywords = ["productivity", "syntax", "transform", "ast"]
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
 ]
 
+[tool.poetry]
+packages = [
+    { include = "scriptpy"}, # real package name
+]
+[tool.poetry.scripts]
+scriptpy = "scriptpy.__main__:main"
 
 [build-system]
 requires = ["poetry-core>=2.0.0,<3.0.0"]
@@ -19,7 +32,4 @@ build-backend = "poetry.core.masonry.api"
 pytest = "^8.4.1"
 
 [tool.pytest.ini_options]
-pythonpath = [ "." ]
-
-[tool.poetry.scripts]
-scriptpy = "scriptpy.__main__:main"
+pythonpath = ["."]
