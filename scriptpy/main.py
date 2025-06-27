@@ -5,8 +5,6 @@ import linecache
 import tokenize
 import sys
 
-import astor
-
 from .TokenEditor import TokenEditor
 
 from .transformers import transformers
@@ -48,7 +46,7 @@ def custom_eval(src: str, globals_: dict | None = None,verbose=False):
 
     ast.fix_missing_locations(tree)
     if verbose:
-        print(f"[DEBUG] Transformed code:```\n{astor.to_source(tree).strip()}\n```\n")
+        print(f"[DEBUG] Transformed code:```\n{ast.unparse(tree).strip()}\n```\n")
     # code = compile(tree, filename, 'eval')
 
     # ——— 3) eval with our small helpers in scope
@@ -123,7 +121,8 @@ def main():
 
     # Execute and print result
     result = custom_eval(code_to_run, globals_=globals_dict or None, verbose=args.verbose)
-    print(result)
+    if result is not None:
+        print(result)
 
 
 
