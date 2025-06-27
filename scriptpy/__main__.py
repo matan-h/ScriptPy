@@ -1,2 +1,3 @@
-from .main import main
-main()
+from .main import main as _main
+def main():
+    _main()

@@ -3,6 +3,7 @@ import ast
 import io
 import linecache
 import tokenize
+import sys
 
 import astor
 
@@ -62,24 +63,57 @@ def custom_eval(src: str, globals_: dict | None = None,verbose=False):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run scriptpy code from a file or the command line."
+    description="Run scriptpy code snippets or script files, with optional data input."
+)
+    # Positional snippet treated as code by default
+    parser.add_argument(
+        'snippet',
+        nargs='?',
+        help="scriptpy code snippet to execute (default) unless --script is used"
     )
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument("filename", nargs="?", help="scriptpy filename to execute")
-    group.add_argument(
-        "-c", "--code", type=str, help="scriptpy code provided as a string"
+    # Script file option
+    parser.add_argument(
+        '-s', '--script',
+        dest='filename',
+        help="Path to scriptpy script file to execute"
     )
-    parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
+    # Data file option
+    parser.add_argument(
+        '-d', '--data',
+        dest='data_file',
+        help="Filename to read as 'data' variable; use '-' for stdin"
+    )
+    parser.add_argument(
+        '-v', '--verbose',
+        action='store_true',
+        help="Enable verbose output"
+    )
 
     args = parser.parse_args()
 
+    # Determine code source: script file or positional snippet
     if args.filename:
-        with open(args.filename, "r") as f:
-            code = f.read()
+        with open(args.filename, 'r') as f:
+            code_to_run = f.read()
+    elif args.snippet:
+        code_to_run = args.snippet
     else:
-        code = args.code
+        parser.error('No code provided. Use positional snippet or -s/--script for files.')
 
-    print(custom_eval(code, verbose=args.verbose))
+    # Load data if requested
+    globals_dict = {}
+    if args.data_file:
+        if args.data_file == '-':
+            data_content = sys.stdin.read()
+        else:
+            with open(args.data_file, 'r') as df:
+                data_content = df.read()
+        globals_dict['data'] = data_content
+
+    # Execute and print result
+    result = custom_eval(code_to_run, globals_=globals_dict or None, verbose=args.verbose)
+    print(result)
+
 
 
 if __name__ == "__main__":
