@@ -1,6 +1,6 @@
 # scriptpy: Python for Scripting
 
-`scriptpy` is a Python extension that simplifies scripting by seamlessly integrating shell commands and introducing a powerful piping syntax for working with lists and iterables. It aims to make common scripting tasks more concise and readable.
+`scriptpy` is a Python extension that simplifies scripting by seamlessly integrating shell commands and introducing a powerful piping syntax for working with lists and iterables. It aims to make live scripting easier.
 
 ## Key Features
 
@@ -21,7 +21,7 @@
 
 * `left |.right(arg1, arg2)` = `[x.right(arg1, arg2) for x in left]`
 
-* Auto-import of fully-qualified functions: for example, `os.path.basename` works without importing `os` (applies to many other standard modules too)
+* Auto-import of fully-qualified functions: for example, `os.path.basename` works without importing `os` (applies to all modules too)
 
 ### Shell Command Execution
 
@@ -45,3 +45,36 @@ The `|` operator applies the right-hand-side operation to each element in the li
 
 If your code is not syntactically complete (e.g., ends with an open bracket `{`, `(`, or `[`), `scriptpy` will try to auto-complete it for you. For instance, entering `[1, 2, 3` will still result in `[1, 2, 3]`.
 
+## Installation
+To install, use:
+```bash
+pip install scriptpy
+```
+
+## Usage
+Use from the command line:
+```bash
+scriptpy '<code>'
+scriptpy -s '<script-filename>'
+cat anything | scriptpy -d- "<code>" # -d is for data file, -d - is to make the "data" var stdin.read().
+# for example:
+curl -s 'https://api.github.com/repos/matan-h/Transfer/commits'|scriptpy -d- '"\n".join(json.loads(data) | .get("commit") | .get("message"))' # print all commits from Transfer.
+```
+> if you want a more complete and interactive way to use this library check out my project `f7`, which is a GUI to manipulate your selection. (you select, press f7 key, then enter a scriptpy expression to change that selection.), also it supports many features such as prefixes and modes
+> this originally was built to use in f7.
+
+## Usage as a python library
+```python
+from scriptpy import custom_eval
+# custom_eval(src: str, globals_: dict | None = None,verbose=False)
+res:list = custom_eval(
+  src='numbers | str |.zfill(3)',
+  globals_={"numbers":list(range(40))},verbose=False)
+
+print(res) # [000,001,002,...]
+```
+## Contributing
+
+Contributions are welcome! If you'd like to suggest a feature, report a bug or an error, or propose any improvements, please  [open an issue](https://github.com/matan-h/scriptpy/issues).
+
+If you'd like to support the project, you can [buy me a coffee](https://www.buymeacoffee.com/matanh) ☕️. Your support helps keep development going and is greatly appreciated.

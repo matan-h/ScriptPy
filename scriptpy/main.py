@@ -75,7 +75,7 @@ def main():
     parser.add_argument(
         '-s', '--script',
         dest='filename',
-        help="Path to scriptpy script file to execute"
+        help="Path to scriptpy script file to execute; use '-' for stdin"
     )
     # Data file option
     parser.add_argument(
@@ -83,6 +83,12 @@ def main():
         dest='data_file',
         help="Filename to read as 'data' variable; use '-' for stdin"
     )
+    parser.add_argument(
+        '-c',
+        dest='csnippet',
+        help=argparse.SUPPRESS,
+    )
+
     parser.add_argument(
         '-v', '--verbose',
         action='store_true',
@@ -93,10 +99,15 @@ def main():
 
     # Determine code source: script file or positional snippet
     if args.filename:
-        with open(args.filename, 'r') as f:
-            code_to_run = f.read()
+        if args.filename == '-':
+            code_to_run = sys.stdin.read()
+        else:
+            with open(args.filename, 'r') as f:
+                code_to_run = f.read()
     elif args.snippet:
         code_to_run = args.snippet
+    elif args.csnippet: # allow "-c" just because people use that in python
+        code_to_run = args.csnippet
     else:
         parser.error('No code provided. Use positional snippet or -s/--script for files.')
 

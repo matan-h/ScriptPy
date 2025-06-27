@@ -9,7 +9,5 @@ transformers:list[Type[BaseTransformer]] = [
     ShellTransformer,
     PipeTransformer,
     AutoImportTransformer
-
-
 ]
 
